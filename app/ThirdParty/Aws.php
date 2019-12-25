@@ -14,6 +14,29 @@ use Illuminate\Support\Str;
 class Aws
 {
     /**
+     * profile default is 'default'
+     * @var string
+     */
+    protected $profile = '';
+
+    /**
+     * @param string $profile
+     */
+    public function setProfile(string $profile)
+    {
+        $this->profile = $profile;
+    }
+
+    public function getProfile(): string
+    {
+        return $this->profile;
+    }
+
+    // --------------------------------------------------------------------------------
+    //  regions
+    // --------------------------------------------------------------------------------
+
+    /**
      * @return array
      * @throws Exception
      */
@@ -30,6 +53,10 @@ class Aws
         return $regions['Regions'];
     }
 
+    // --------------------------------------------------------------------------------
+    //  instances
+    // --------------------------------------------------------------------------------
+
     /**
      * @param string $region
      * @return array
@@ -42,12 +69,50 @@ class Aws
         $result = $this->executeCommandAndCache($cmd, $cacheKey);
 
         if (!$result) {
-            throw new Exception('instance not found');
+            throw new Exception('instances not found');
         }
 
         $instances = json_decode($result, true);
         return $instances;
     }
+
+    public function instancesReservationsByGregoinAndId(string $region, string $instanceId): array
+    {
+        $cacheKey = "region-{$region}-instance-{$instanceId}";
+        $cmd = "aws ec2 describe-instances --region '{$region}' --instance-ids '{$instanceId}'";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('instance not found');
+        }
+
+        $instance = json_decode($result, true);
+        return $instance;
+    }
+
+    // --------------------------------------------------------------------------------
+    //  volumns
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @param string $region
+     * @return array
+     * @throws Exception
+     */
+    public function volumnsByRegoin(string $region): array
+    {
+        $cacheKey = "region-{$region}-all-volumns";
+        $cmd = "aws ec2 describe-volumes --region '{$region}'";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('volumns not found');
+        }
+
+        $instances = json_decode($result, true);
+        return $instances;
+    }
+
 
     // --------------------------------------------------------------------------------
     //  private
@@ -68,6 +133,7 @@ class Aws
      *      - execute command
      *      - create cache folder
      *      - create cache data
+     *      - use --profile option
      *
      * @param string $cmd
      * @param string $cacheKey
@@ -75,14 +141,21 @@ class Aws
      */
     protected function executeCommandAndCache(string $cmd, string $cacheKey)
     {
-        $debug = false;
+        $debug = true;
         $debugInfo = [];
 
-        $file = $this->file($cacheKey);
+        if (!$this->profile) {
+            throw new Exception('Error: aws --profile not fould !');
+        }
+
+        $file = $this->file($this->profile . '-' . $cacheKey);
+        // echo $file."<Br>\n";
+
         if (file_exists($file)) {
             $debugInfo [] = "used cache";
         } else {
-            $command = "{$cmd} > '{$file}'";
+            $command = "{$cmd} --profile '{$this->profile}' > '{$file}'";
+
             $debugInfo [] = "command: {$command}";
 
             $folder = dirname($file);
@@ -107,7 +180,12 @@ class Aws
             Log::info($debugInfo);
         }
 
-        return (string)file_get_contents($file);
+        $result = (string) file_get_contents($file);
+        if (! $result) {
+            throw new Exception("empty content in `{$file}`");
+        }
+
+        return $result;
     }
 
 }

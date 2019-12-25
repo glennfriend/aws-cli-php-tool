@@ -4,8 +4,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/instances', 'Home\HomeController@instances');
-// Route::get('/volumns', 'Home\HomeController@');
-// Route::get('/snapshots', 'Home\HomeController@');
-// Route::get('/images', 'Home\HomeController@');
-// Route::get('/ips', 'Home\HomeController@');
+Route::get('/instances',        'Home\InstanceController@show');
+Route::get('/volumns',          'Home\VolumnController@show');
+Route::get('/volumns/perform',  'Home\VolumnController@perform');
+// Route::get('/snapshots', 'Home\HomeController@show');
+// Route::get('/images', 'Home\HomeController@show');
+// Route::get('/ips', 'Home\HomeController@show');

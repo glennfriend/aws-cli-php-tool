@@ -10,7 +10,7 @@ use App\Entities\Instance;
 /**
  *
  */
-class HomeController extends Controller
+class InstanceController extends Controller
 {
     /**
      * Create a new controller instance.
@@ -20,22 +20,26 @@ class HomeController extends Controller
     public function __construct(Aws $aws)
     {
         $this->aws = $aws;
+        $this->aws->setProfile('default');
+        // $this->aws->setProfile('rto');
     }
 
-    public function instances()
+    public function show()
     {
         $instances = collect();
         $regions = $this->aws->regions();
+        /*
         $regions = [ // test only
             ["RegionName" => "us-east-2"],
             ["RegionName" => "us-east-1"],
         ];
+        */
 
         foreach ($regions as $region) {
             $region = $region['RegionName'];
             $instancesReservations = $this->aws->instancesReservationsByRegoin($region);
 
-            $tempInstances = $this->getInstancesByInstancesReservations($instancesReservations);
+            $tempInstances = $this->squeezeInstancesByInstancesReservations($instancesReservations);
             if (!$tempInstances) {
                 continue;
             }
@@ -56,14 +60,18 @@ class HomeController extends Controller
 
         $result = [];
         foreach ($instances as $instance) {
-            $result[] = $instance->dump();
+            $tmp = $instance->dump();
+            $tmp['meta'] = [];
+            $tmp['meta']['setting_tags'] = $this->buildSettingTagsByInstance($instance);
+
+            $result[] = $tmp;
         }
 
         return response()->json($result);
     }
 
 
-    protected function getInstancesByInstancesReservations(array $instancesReservations)
+    protected function squeezeInstancesByInstancesReservations(array $instancesReservations)
     {
         if (!$instancesReservations) {
             return [];
@@ -82,6 +90,22 @@ class HomeController extends Controller
         }
 
         return $instances;
+    }
+
+    /**
+     * @param Volumn $volumn
+     * @param Instance $instance
+     * @return array
+     */
+    protected function buildSettingTagsByInstance(Instance $instance)
+    {
+        return [
+            'tag' => [
+                'Environment'   => $instance->getTag('Environment', 'Production'),
+                'AWS Type'      => 'Instance',
+                'Instance Name' => $instance->getId(),
+            ]
+        ];
     }
 
 }
