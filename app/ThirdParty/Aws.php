@@ -19,9 +19,6 @@ class Aws
      */
     protected $profile = '';
 
-    /**
-     * @param string $profile
-     */
     public function setProfile(string $profile)
     {
         $this->profile = $profile;
@@ -30,6 +27,16 @@ class Aws
     public function getProfile(): string
     {
         return $this->profile;
+    }
+
+    public function setOwnerId(string $ownerId)
+    {
+        $this->ownerId = $ownerId;
+    }
+
+    public function getOwnerId(): string
+    {
+        return $this->ownerId;
     }
 
     // --------------------------------------------------------------------------------
@@ -91,7 +98,7 @@ class Aws
     }
 
     // --------------------------------------------------------------------------------
-    //  volumns
+    //  volumes
     // --------------------------------------------------------------------------------
 
     /**
@@ -99,20 +106,68 @@ class Aws
      * @return array
      * @throws Exception
      */
-    public function volumnsByRegoin(string $region): array
+    public function volumesByRegoin(string $region): array
     {
-        $cacheKey = "region-{$region}-all-volumns";
+        $cacheKey = "region-{$region}-all-volumes";
         $cmd = "aws ec2 describe-volumes --region '{$region}'";
         $result = $this->executeCommandAndCache($cmd, $cacheKey);
 
         if (!$result) {
-            throw new Exception('volumns not found');
+            throw new Exception('volumes not found');
         }
 
         $instances = json_decode($result, true);
         return $instances;
     }
 
+    public function volumesByGregoinAndId(string $region, string $volumeId): array
+    {
+        $cacheKey = "region-{$region}-volume-{$volumeId}";
+        $cmd = "aws ec2 describe-volumes --region '{$region}' --volume-ids '{$volumeId}'";
+        // echo $cmd . "\n";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('volume not found');
+        }
+
+        $instance = json_decode($result, true);
+        return $instance;
+    }
+
+    // --------------------------------------------------------------------------------
+    //  snapshots
+    // --------------------------------------------------------------------------------
+
+    public function snapshotsByRegoin(string $region): array
+    {
+        $cacheKey = "region-{$region}-all-snapshots";
+        $cmd = "aws ec2 describe-snapshots --region '{$region}' --owner-id '{$this->ownerId}'";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('snapshots not found');
+        }
+
+        $snapshots = json_decode($result, true);
+        return $snapshots;
+    }
+
+    /*
+    public function snapshotsByGregoinAndId(string $region, string $snapshotId): array
+    {
+        $cacheKey = "region-{$region}-snapshot-{$snapshotId}";
+        $cmd = "aws ec2 describe-snapshots --region '{$region}' --snapshot-ids '{$snapshotId}'";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('snapshot not found');
+        }
+
+        $instance = json_decode($result, true);
+        return $instance;
+    }
+    */
 
     // --------------------------------------------------------------------------------
     //  private
@@ -141,51 +196,48 @@ class Aws
      */
     protected function executeCommandAndCache(string $cmd, string $cacheKey)
     {
-        $debug = true;
-        $debugInfo = [];
-
         if (!$this->profile) {
             throw new Exception('Error: aws --profile not fould !');
+        }
+        if (!$this->ownerId) {
+            throw new Exception('Error: aws --owner-id not fould !');
         }
 
         $file = $this->file($this->profile . '-' . $cacheKey);
         // echo $file."<Br>\n";
 
         if (file_exists($file)) {
-            $debugInfo [] = "used cache";
+            $this->log("used cache in {$file}");
         } else {
             $command = "{$cmd} --profile '{$this->profile}' > '{$file}'";
 
-            $debugInfo [] = "command: {$command}";
+            $this->log("command: {$command}");
 
             $folder = dirname($file);
             if (!file_exists($folder)) {
-                $debugInfo [] = "mkdir data folder";
+                $this->log("mkdir data folder");
                 mkdir($folder);
             }
 
             system($command);
-            $debugInfo [] = "create content by aws-cli";
+            $this->log("create content by aws-cli");
 
             if (!file_exists($file)) {
-                $debugInfo [] = "create content fail !";
-                if ($debug) {
-                    Log::info($debugInfo);
-                }
+                $this->log("create content fail !");
                 return null;
             }
         }
 
-        if ($debug) {
-            Log::info($debugInfo);
-        }
-
-        $result = (string) file_get_contents($file);
-        if (! $result) {
-            throw new Exception("empty content in `{$file}`");
+        $result = (string)file_get_contents($file);
+        if (!$result) {
+            // throw new Exception("empty content in `{$file}`");
         }
 
         return $result;
     }
 
+    protected function log($message)
+    {
+        log::info($message);
+    }
 }

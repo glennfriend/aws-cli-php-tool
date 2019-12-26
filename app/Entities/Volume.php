@@ -5,7 +5,7 @@ namespace App\Entities;
 /**
  *
  */
-class Instance
+class Volume
 {
     public $data;
     protected $region;
@@ -19,9 +19,15 @@ class Instance
         $this->region = $region;
     }
 
+    public function getRegion(): string
+    {
+        return $this->region;
+    }
+
+
     public function getId(): string
     {
-        return $this->data['InstanceId'];
+        return $this->data['VolumeId'];
     }
 
     /**
@@ -29,7 +35,7 @@ class Instance
      */
     public function getState(): string
     {
-        return $this->data['State']['Name'];
+        return $this->data['State'];
     }
 
     /**
@@ -54,6 +60,21 @@ class Instance
         return $defaultValue;
     }
 
+    /**
+     * @return null|string
+     */
+    public function getInstanceId(): ?string
+    {
+        if (
+            $this->data['Attachments'] &&
+            $this->data['Attachments'][0] &&
+            $this->data['Attachments'][0]['InstanceId']
+        ) {
+            return $this->data['Attachments'][0]['InstanceId'];
+        }
+        return null;
+    }
+
     public function getCustomTags()
     {
         return [
@@ -62,25 +83,8 @@ class Instance
             'Project'       => $this->getTag('project'),
             'Environment'   => $this->getTag('environment'),
             'AWS Type'      => $this->getTag('aws type'),
-            'Instance Name' => $this->getTag('instance name')
+            'Instance Name' => $this->getTag('instance name'),
         ];
-    }
-
-    /**
-     * @return null|string
-     */
-    public function getNnetworkInterfacesGroupName(): ?string
-    {
-        if (
-            $this->data['NetworkInterfaces'] &&
-            $this->data['NetworkInterfaces'][0] &&
-            $this->data['NetworkInterfaces'][0]['Groups'] &&
-            $this->data['NetworkInterfaces'][0]['Groups'][0] &&
-            $this->data['NetworkInterfaces'][0]['Groups'][0]['GroupName']
-        ) {
-            return $this->data['NetworkInterfaces'][0]['Groups'][0]['GroupName'];
-        }
-        return null;
     }
 
     /**
@@ -88,13 +92,17 @@ class Instance
      */
     public function dump(): array
     {
+        $instanceId = $this->getInstanceId();
+
         return [
-            'region'                        => $this->region,
-            'id'                            => $this->data['InstanceId'],
-            'type'                          => $this->data['InstanceType'],
-            'state'                         => $this->getState(),
-            'network_interfaces_group_name' => $this->getNnetworkInterfacesGroupName(),
-            'tag'                           => $this->getCustomTags(),
+            'region'      => $this->region,
+            // 'region-full' => $this->data['AvailabilityZone'],
+            'id'          => $this->getId(),
+            'type'        => $this->data['VolumeType'],
+            'state'       => $this->getState(),
+            'instance-id' => $instanceId,
+            'snapshot-id' => $this->data['SnapshotId'],
+            'tag'         => $this->getCustomTags(),
         ];
     }
 }

@@ -5,7 +5,7 @@ namespace App\Entities;
 /**
  *
  */
-class Volumn
+class Snapshot
 {
     public $data;
     protected $region;
@@ -27,7 +27,7 @@ class Volumn
 
     public function getId(): string
     {
-        return $this->data['VolumeId'];
+        return $this->data['SnapshotId'];
     }
 
     /**
@@ -75,28 +75,29 @@ class Volumn
         return null;
     }
 
+    public function getCustomTags()
+    {
+        return [
+            'BU'            => $this->getTag('bu'),
+            'Name'          => $this->getTag('name'),
+            'Project'       => $this->getTag('project'),
+            'Environment'   => $this->getTag('environment'),
+            'AWS Type'      => $this->getTag('aws type'),
+            'Instance Name' => $this->getTag('instance name')
+        ];
+    }
+
     /**
      * @return array
      */
     public function dump(): array
     {
-        $instanceId = $this->getInstanceId();
-
         return [
-            'region'      => $this->region,
-            // 'region-full' => $this->data['AvailabilityZone'],
-            'id'          => $this->data['VolumeId'],
-            'type'        => $this->data['VolumeType'],
-            'state'       => $this->getState(),
-            'instance-id' => $instanceId,
-            'snapshot-id' => $this->data['SnapshotId'],
-            'tag'         => [
-                'BU'            => $this->getTag('bu'),
-                'Name'          => $this->getTag('name'),
-                'Project'       => $this->getTag('project'),
-                'AWS Type'      => $this->getTag('aws type'),
-                'Instance Name' => $this->getTag('instance name'),
-            ],
+            'region'    => $this->region,
+            'id'        => $this->getId(),
+            'state'     => $this->getState(),
+            'volume-id' => $this->data['VolumeId'],
+            'tag'       => $this->getCustomTags(),
         ];
     }
 }
