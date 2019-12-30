@@ -69,4 +69,29 @@ class SqueezeAwsResource
 
         return $result;
     }
+
+    public function getAddressesByAddresses(array $addressesResource)
+    {
+        if (!$addressesResource) {
+            return [];
+        }
+        if (!$addressesResource['Addresses']) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($addressesResource['Addresses'] as $address)
+        {
+            if (!isset($address['InstanceId'])) {
+                continue;
+            }
+            if (!isset($address['AssociationId'])) {
+                continue;
+            }
+
+            $result[] = $address;
+        }
+
+        return $result;
+    }
 }

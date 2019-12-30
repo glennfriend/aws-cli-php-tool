@@ -170,6 +170,42 @@ class Aws
     */
 
     // --------------------------------------------------------------------------------
+    //  Elastic IP
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Elastic IP addresses
+     */
+    public function addressesByRegoin(string $region): array
+    {
+        $cacheKey = "region-{$region}-all-address";
+        $cmd = "aws ec2 describe-addresses --region '{$region}' ";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('addresses not found');
+        }
+
+        $snapshots = json_decode($result, true);
+        return $snapshots;
+    }
+
+    public function addressesByGregoinAndAllocationId(string $region, string $allocationId): array
+    {
+        $cacheKey = "region-{$region}-allocation-{$allocationId}";
+        $cmd = "aws ec2 describe-addresses --region '{$region}' --allocation-ids '{$allocationId}'";
+        // echo $cmd . "\n";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('volume not found');
+        }
+
+        $instance = json_decode($result, true);
+        return $instance;
+    }
+
+    // --------------------------------------------------------------------------------
     //  private
     // --------------------------------------------------------------------------------
 
@@ -193,6 +229,7 @@ class Aws
      * @param string $cmd
      * @param string $cacheKey
      * @return null|string
+     * @throws Exception
      */
     protected function executeCommandAndCache(string $cmd, string $cacheKey)
     {
