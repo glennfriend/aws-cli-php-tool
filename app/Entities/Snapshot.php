@@ -24,7 +24,6 @@ class Snapshot
         return $this->region;
     }
 
-
     public function getId(): string
     {
         return $this->data['SnapshotId'];

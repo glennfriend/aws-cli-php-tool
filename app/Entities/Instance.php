@@ -19,6 +19,11 @@ class Instance
         $this->region = $region;
     }
 
+    public function getRegion(): string
+    {
+        return $this->region;
+    }
+
     public function getId(): string
     {
         return $this->data['InstanceId'];
@@ -54,18 +59,6 @@ class Instance
         return $defaultValue;
     }
 
-    public function getCustomTags()
-    {
-        return [
-            'BU'            => $this->getTag('bu'),
-            'Name'          => $this->getTag('name'),
-            'Project'       => $this->getTag('project'),
-            'Environment'   => $this->getTag('environment'),
-            'AWS Type'      => $this->getTag('aws type'),
-            'Instance Name' => $this->getTag('instance name')
-        ];
-    }
-
     /**
      * @return null|string
      */
@@ -81,6 +74,18 @@ class Instance
             return $this->data['NetworkInterfaces'][0]['Groups'][0]['GroupName'];
         }
         return null;
+    }
+
+    public function getCustomTags()
+    {
+        return [
+            'BU'            => $this->getTag('bu'),
+            'Name'          => $this->getTag('name'),
+            'Project'       => $this->getTag('project'),
+            'Environment'   => $this->getTag('environment'),
+            'AWS Type'      => $this->getTag('aws type'),
+            'Instance Name' => $this->getTag('instance name')
+        ];
     }
 
     /**

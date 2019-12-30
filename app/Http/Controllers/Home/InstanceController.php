@@ -30,6 +30,33 @@ class InstanceController extends Controller
 
     public function show()
     {
+        return response()->json($this->flow());
+    }
+
+    public function perform()
+    {
+        $result = $this->flow();
+
+        $today = date('c');
+        echo "echo '{$today}'" . "\n";
+
+        foreach ($result as $row) {
+            if (!$row['meta']['build']) {
+                continue;
+            }
+            echo $row['meta']['build'] . "\n";
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+    //  private
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @return array
+     */
+    protected function flow(): array
+    {
         $instances = collect();
         $regions = $this->aws->regions();
         /*
@@ -64,14 +91,15 @@ class InstanceController extends Controller
 
         $result = [];
         foreach ($instances as $instance) {
+            $settingTags = $this->buildSettingTagsByInstance($instance);
             $tmp = $instance->dump();
             $tmp['meta'] = [];
-            $tmp['meta']['setting_tags'] = $this->buildSettingTagsByInstance($instance);
-
+            $tmp['meta']['setting_tags'] = $settingTags;
+            $tmp['meta']['build'] = $this->buildSettingTagsCommand($instance, $settingTags);
             $result[] = $tmp;
         }
 
-        return response()->json($result);
+        return $result;
     }
 
     /**
@@ -81,12 +109,39 @@ class InstanceController extends Controller
     protected function buildSettingTagsByInstance(Instance $instance)
     {
         return [
-            'tag' => [
-                'Environment'   => $instance->getTag('environment', 'Production'),
-                'AWS Type'      => 'Instance',
-                'Instance Name' => $instance->getTag('name'),
-            ]
+            'AWS Type'      => 'EC2 Instance',
+            'Instance Name' => $instance->getTag('name'),
         ];
+    }
+
+    /**
+     * @param Instance $instance
+     * @param array $settingTags
+     * @return string
+     */
+    protected function buildSettingTagsCommand(Instance $instance, array $settingTags)
+    {
+        $region = $instance->getRegion();
+        $instanceId = $instance->getId();
+        $profile = $this->aws->getProfile();
+
+        $showTags = [];
+        foreach (array_filter($settingTags) as $tag => $value) {
+            $showTags[] = "Key='{$tag}',Value='{$value}'";
+        }
+
+        if (!$profile) {
+            return '';
+        }
+
+        $cmd = '';
+        $cmd .= "aws ec2 create-tags ";
+        $cmd .= "--profile '{$profile}' ";
+        $cmd .= "--region '{$region}' ";
+        $cmd .= "--resources '{$instanceId}' ";
+        $cmd .= "--tags " . join('  ', $showTags) . " ";
+
+        return $cmd;
     }
 
 }
