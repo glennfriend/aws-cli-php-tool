@@ -153,7 +153,6 @@ class Aws
         return $snapshots;
     }
 
-    /*
     public function snapshotsByGregoinAndId(string $region, string $snapshotId): array
     {
         $cacheKey = "region-{$region}-snapshot-{$snapshotId}";
@@ -167,7 +166,6 @@ class Aws
         $instance = json_decode($result, true);
         return $instance;
     }
-    */
 
     // --------------------------------------------------------------------------------
     //  Elastic IP
@@ -203,6 +201,24 @@ class Aws
 
         $instance = json_decode($result, true);
         return $instance;
+    }
+
+    // --------------------------------------------------------------------------------
+    //  images
+    // --------------------------------------------------------------------------------
+
+    public function imagesByRegoin(string $region): array
+    {
+        $cacheKey = "region-{$region}-all-images";
+        $cmd = "aws ec2 describe-images --region '{$region}' --owners '{$this->ownerId}'";
+        $result = $this->executeCommandAndCache($cmd, $cacheKey);
+
+        if (!$result) {
+            throw new Exception('images not found');
+        }
+
+        $snapshots = json_decode($result, true);
+        return $snapshots;
     }
 
     // --------------------------------------------------------------------------------

@@ -142,7 +142,7 @@ class AddressController extends Controller
             'Name'          => "{$instanceName} Address",
             'Project'       => $instance->getTag('project', 'Unknown'),
             'Environment'   => $environment,
-            'AWS Type'      => 'Address',
+            'AWS Type'      => 'EC2 Address',
             'Instance Name' => $instanceName ?? 'Unknown',
         ];
     }

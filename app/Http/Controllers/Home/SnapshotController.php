@@ -165,7 +165,7 @@ class SnapshotController extends Controller
             'Name'          => "{$volumeName} Snapshot " . $startDate,
             'Project'       => $volume->getTag('project', 'Unknown'),
             'Environment'   => $environment,
-            'AWS Type'      => 'Snapshot',
+            'AWS Type'      => 'EC2 Snapshot',
             'Instance Name' => $instanceName ?? 'Unknown',
         ];
     }

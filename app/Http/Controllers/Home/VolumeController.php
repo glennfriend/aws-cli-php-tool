@@ -138,7 +138,7 @@ class VolumeController extends Controller
             'Name'          => "{$instanceName} Volume",
             'Project'       => $instance->getTag('project', 'Unknown'),
             'Environment'   => $environment,
-            'AWS Type'      => 'Volume',
+            'AWS Type'      => 'EC2 Volume',
             'Instance Name' => $instanceName,
         ];
     }

@@ -70,6 +70,31 @@ class SqueezeAwsResource
         return $result;
     }
 
+    public function getImagesByImages(array $imagesResource)
+    {
+        if (!$imagesResource) {
+            return [];
+        }
+        if (!$imagesResource['Images']) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($imagesResource['Images'] as $image)
+        {
+            if (!isset($image['Public'])) {
+                continue;
+            }
+            if (true===$image['Public']) {
+                continue;
+            }
+
+            $result[] = $image;
+        }
+
+        return $result;
+    }
+
     public function getAddressesByAddresses(array $addressesResource)
     {
         if (!$addressesResource) {
