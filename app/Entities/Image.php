@@ -2,6 +2,8 @@
 
 namespace App\Entities;
 
+use App\Entities\EntityHelp\ImageEntityHelp;
+
 /**
  *
  */
@@ -100,4 +102,17 @@ class Image
             'tag'         => $this->getCustomTags(),
         ];
     }
+
+    // --------------------------------------------------------------------------------
+    //  lazy loading
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @return ImageEntityHelp
+     */
+    public function factoryHelp(): ImageEntityHelp
+    {
+        return new ImageEntityHelp($this);
+    }
+
 }

@@ -85,17 +85,8 @@ class ImageController extends Controller
             $tmp = $image->dump();
             $tmp['meta'] = [];
 
-            $region = $tmp['region'];
-            $snapshotId = $image->getMapSnapshotId();
-            if (!$snapshotId) {
-                continue;
-            }
-
-            $tempSnapshots = $this->aws->snapshotsByGregoinAndId($region, $snapshotId);
-            $tempSnapshots = $this->squeezeAwsResource->getSnapshotsBySnapshots($tempSnapshots);
-            $tempSnapshot = $tempSnapshots[0];
-            $snapshot = new Snapshot($tempSnapshot, $region);
-
+            $imageHelp = $image->factoryHelp();
+            $snapshot = $imageHelp->fetchSnapshot();
             if (!$snapshot) {
                 continue;
             }
