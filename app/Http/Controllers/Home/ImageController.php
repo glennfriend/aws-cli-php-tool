@@ -7,7 +7,6 @@ use Exception;
 use App\Http\Controllers\Controller;
 use App\ThirdParty\Aws;
 use App\Service\SqueezeAwsResource;
-use App\Entities\Instance;
 use App\Entities\Image;
 use Illuminate\Support\Facades\Log;
 
@@ -21,13 +20,7 @@ class ImageController extends Controller
      */
     public function __construct(Aws $aws, SqueezeAwsResource $squeezeAwsResource)
     {
-        $profile = env('AWS_PROFILE');
-        $ownerId = env('AWS_OWNER_ID');
-
         $this->aws = $aws;
-        $this->aws->setOwnerId($ownerId);
-        $this->aws->setProfile($profile);
-
         $this->squeezeAwsResource = $squeezeAwsResource;
     }
 
