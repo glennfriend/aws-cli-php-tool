@@ -108,7 +108,16 @@ class InstanceController extends Controller
      */
     protected function buildSettingTagsByInstance(Instance $instance)
     {
+        $environment = $instance->getTag('environment', 'Production');
+        $name = $instance->getTag('name');
+
+        // NOTE: 如果 name 有包含 'staging' 的字, 就將 env 設定為 'Staging'
+        if (preg_match('/staging/i', $name)) {
+            $environment = 'Staging';
+        }
+
         return [
+            'Environment'   => $environment,
             'AWS Type'      => 'EC2 Instance',
             'Instance Name' => $instance->getTag('name'),
         ];

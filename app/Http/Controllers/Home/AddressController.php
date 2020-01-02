@@ -62,10 +62,12 @@ class AddressController extends Controller
     {
         $addresses = collect();
         $regions = $this->aws->regions();
+        /*
         $regions = [ // test only
             ["RegionName" => "us-east-1"],
             ["RegionName" => "us-east-2"],
         ];
+        */
 
         foreach ($regions as $region) {
             $region = $region['RegionName'];

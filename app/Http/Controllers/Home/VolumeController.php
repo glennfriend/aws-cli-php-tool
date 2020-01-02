@@ -91,7 +91,7 @@ class VolumeController extends Controller
             $region = $tmp['region'];
             $instanceId = $tmp['instance-id'];
 
-            $settingTags = [];
+            $instance = null;
             $instanceTags = [];
             if ($instanceId) {
 
@@ -102,9 +102,9 @@ class VolumeController extends Controller
                     $instanceArray = $tempInstances[0];
                     $instance = new Instance($instanceArray, $region);
                     $instanceTags = $instance->getCustomTags();
-                    $settingTags = $this->buildSettingTagsByVolumeAndInstance($volume, $instance);
                 }
             }
+            $settingTags = $this->buildSettingTagsByVolumeAndInstance($volume, $instance);
 
             $tmp['meta']['instance_tags'] = $instanceTags;
             $tmp['meta']['setting_tags'] = $settingTags;
@@ -121,18 +121,21 @@ class VolumeController extends Controller
      * @param Instance $instance
      * @return array
      */
-    protected function buildSettingTagsByVolumeAndInstance(Volume $volume, Instance $instance)
+    protected function buildSettingTagsByVolumeAndInstance(Volume $volume, Instance $instance=null)
     {
+        if (!$instance) {
+            return [
+                'BU'            => 'Unknown',
+                'Name'          => $volume->getTag('name', 'Unknown'),
+                'Project'       => 'Unknown',
+                'Environment'   => $volume->getTag('environment', 'Unknown'),
+                'AWS Type'      => 'EC2 Volume',
+                'Instance Name' => 'Unknown',
+            ];
+        }
+
         $instanceName = $instance->getTag('name');
-
-        // NOTE: 如果 name 有包含 'staging' 的字, 就將 env 設定為 'Staging'
-        if (preg_match('/staging/i', $instanceName)) {
-            $environment = 'Staging';
-        }
-        else {
-            $environment = $instance->getTag('environment', 'Production');
-        }
-
+        $environment = $instance->getTag('environment', 'Production');
         return [
             'BU'            => $instance->getTag('bu', 'Unknown'),
             'Name'          => "{$instanceName} Volume",
@@ -154,7 +157,6 @@ class VolumeController extends Controller
     protected function buildSettingTagsCommand(Volume $volume, array $settingTags)
     {
         $region = $volume->getRegion();
-        $instanceId = $volume->getInstanceId();
         $volumeId = $volume->getId();
         $profile = $this->aws->getProfile();
 
@@ -163,9 +165,6 @@ class VolumeController extends Controller
             $showTags[] = "Key='{$tag}',Value='{$value}'";
         }
 
-        if (!$instanceId) {
-            return '';
-        }
         if (!$profile) {
             return '';
         }
